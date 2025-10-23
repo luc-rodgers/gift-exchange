@@ -1,0 +1,17 @@
+{
+  "hosting": {
+    "site": "site": "gift-exchange-simulator-28531",
+    "public": "/Users/luc/Documents/gift-simulator",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
