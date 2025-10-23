@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Christmas Gift Exchange</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // ===== CONFIGURATION SECTION - EDIT THIS =====
+        const PARTICIPANTS = [
+            { name: 'Luc', emoji: '🎅' },
+            { name: 'Britt', emoji: '🤶' },
+            { name: 'Brian', emoji: '🎅' },
+            { name: 'Leah', emoji: '🤶' },
+            { name: 'Jeff', emoji: '🎅' },
+            { name: 'Shay', emoji: '🤶' },
+            { name: 'Lori', emoji: '🤶'},
+            { name: 'Mark', emoji: '🎅' }
+        ];
+
+        const RESTRICTIONS = {
+            'Luc': ['Britt'],      // Luc can't select Britt
+            'Britt': ['Luc'],     // Britt can't select Luc
+            'Brian': ['Leah'],    // Leah can't select Brian
+            'Leah': ['Brian'],      // Brian can't select Leah
+            'Jeff': ['Shay'],      // Jeff can't select Shay
+            'Shay': ['Jeff'],      // Shay can't select Jeff
+            'Lori': ['Mark'],      // Lori can't select Mark
+            'Mark': ['Loir']     // Mark can't select Lori
+        };
+
+        // IMPORTANT: Replace with your Vercel URL + /api
+        const API_ENDPOINT = 'gift-exchange-virid.vercel.app';
+        // =============================================
+
+        const Gift = () => (
+            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+            </svg>
+        );
+
+        const Play = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const RefreshIcon = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+        );
+
+        function GiftExchange() {
+            const [selectedPerson, setSelectedPerson] = useState('');
+            const [result, setResult] = useState(null);
+            const [alreadySelected, setAlreadySelected] = useState([]);
+            const [alreadyPicked, setAlreadyPicked] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState('');
+
+            useEffect(() => {
+                loadData();
+                const interval = setInterval(loadData, 3000);
+                return () => clearInterval(interval);
+            }, []);
+
+            const loadData = async () => {
+                try {
+                    const response = await fetch(`${API_ENDPOINT}/get`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setAlreadySelected(data.alreadySelected || []);
+                        setAlreadyPicked(data.alreadyPicked || []);
+                    }
+                    setLoading(false);
+                } catch (e) {
+                    console.error('Failed to load data:', e);
+                    setError('Failed to connect to server');
+                    setLoading(false);
+                }
+            };
+
+            const saveData = async (newSelected, newPicked) => {
+                try {
+                    await fetch(`${API_ENDPOINT}/set`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            alreadySelected: newSelected,
+                            alreadyPicked: newPicked
+                        })
+                    });
+                } catch (e) {
+                    console.error('Failed to save data:', e);
+                    setError('Failed to save selection');
+                }
+            };
+
+            const runSelection = async () => {
+                if (!selectedPerson) return;
+
+                if (alreadyPicked.includes(selectedPerson)) {
+                    setResult({ error: 'You have already made your selection!' });
+                    return;
+                }
+
+                const available = PARTICIPANTS
+                    .map(p => p.name)
+                    .filter(name => 
+                        name !== selectedPerson && 
+                        !alreadySelected.includes(name) &&
+                        !(RESTRICTIONS[selectedPerson] || []).includes(name)
+                    );
+
+                if (available.length === 0) {
+                    setResult({ error: 'No available recipients!' });
+                    return;
+                }
+
+                const randomIndex = Math.floor(Math.random() * available.length);
+                const selected = available[randomIndex];
+                
+                const newSelected = [...alreadySelected, selected];
+                const newPicked = [...alreadyPicked, selectedPerson];
+                
+                setResult({ 
+                    name: selected, 
+                    emoji: PARTICIPANTS.find(p => p.name === selected)?.emoji 
+                });
+                setAlreadySelected(newSelected);
+                setAlreadyPicked(newPicked);
+                
+                await saveData(newSelected, newPicked);
+            };
+
+            const resetSelection = () => {
+                setSelectedPerson('');
+                setResult(null);
+            };
+
+            const resetAll = async () => {
+                if (confirm('Are you sure you want to reset all selections? This cannot be undone.')) {
+                    setAlreadySelected([]);
+                    setAlreadyPicked([]);
+                    setSelectedPerson('');
+                    setResult(null);
+                    await saveData([], []);
+                }
+            };
+
+            if (loading) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-red-700 via-green-700 to-red-800 p-8 flex items-center justify-center">
+                        <div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
+                            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-600 mx-auto mb-4"></div>
+                            <p className="text-xl font-semibold text-gray-700">Loading...</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-red-700 via-green-700 to-red-800 p-8">
+                    <div className="max-w-2xl mx-auto">
+                        <div className="bg-white rounded-2xl shadow-2xl p-8">
+                            <div className="text-center mb-8">
+                                <div className="flex justify-center mb-4">
+                                    <Gift />
+                                </div>
+                                <h1 className="text-4xl font-bold text-green-800 mb-2">🎄 Secret Santa 🎄</h1>
+                                <p className="text-gray-600">Select your name and discover your gift recipient!</p>
+                                {error && (
+                                    <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
+                                        {error}
+                                    </div>
+                                )}
+                            </div>
+
+                            {!result ? (
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-lg font-semibold text-gray-700 mb-3">Who are you?</label>
+                                        <select
+                                            value={selectedPerson}
+                                            onChange={(e) => setSelectedPerson(e.target.value)}
+                                            className="w-full px-4 py-3 border-2 border-green-300 rounded-lg text-lg focus:outline-none focus:border-green-500"
+                                        >
+                                            <option value="">-- Select Your Name --</option>
+                                            {PARTICIPANTS.map((p, i) => (
+                                                <option 
+                                                    key={i} 
+                                                    value={p.name}
+                                                    disabled={alreadyPicked.includes(p.name)}
+                                                    style={alreadyPicked.includes(p.name) ? { textDecoration: 'line-through', color: '#999' } : {}}
+                                                >
+                                                    {p.emoji} {p.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <button
+                                        onClick={runSelection}
+                                        disabled={!selectedPerson}
+                                        className="w-full py-4 bg-gradient-to-r from-red-600 to-green-600 text-white rounded-xl font-bold text-xl hover:from-red-700 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                                    >
+                                        <Play />
+                                        Reveal Your Match!
+                                    </button>
+
+                                    {alreadyPicked.length > 0 && (
+                                        <button
+                                            onClick={resetAll}
+                                            className="w-full py-2 text-red-600 hover:text-red-800 text-sm flex items-center justify-center gap-2"
+                                        >
+                                            <RefreshIcon />
+                                            Reset All Selections (Admin Only)
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="text-center space-y-6">
+                                    {result.error ? (
+                                        <>
+                                            <div className="p-6 bg-red-100 rounded-xl">
+                                                <p className="text-xl font-semibold text-red-800">{result.error}</p>
+                                            </div>
+                                            <button
+                                                onClick={resetSelection}
+                                                className="w-full py-3 bg-gray-600 text-white rounded-xl font-semibold hover:bg-gray-700"
+                                            >
+                                                Back
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="p-8 bg-gradient-to-br from-green-100 to-red-100 rounded-xl">
+                                                <p className="text-2xl font-semibold text-gray-700 mb-4">
+                                                    {selectedPerson}, you're buying a gift for:
+                                                </p>
+                                                <div className="text-8xl mb-4">{result.emoji}</div>
+                                                <p className="text-4xl font-bold text-green-800">{result.name}</p>
+                                            </div>
+                                            <p className="text-sm text-gray-600">🤫 Remember, it's a secret!</p>
+                                            <button
+                                                onClick={resetSelection}
+                                                className="w-full py-3 bg-gray-600 text-white rounded-xl font-semibold hover:bg-gray-700"
+                                            >
+                                                Done (Next Person)
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {alreadyPicked.length > 0 && (
+                                <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+                                    <p className="text-sm text-gray-600 font-semibold mb-2">
+                                        Already Made Selection ({alreadyPicked.length}/{PARTICIPANTS.length}):
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {alreadyPicked.map((name, i) => (
+                                            <span key={i} className="px-3 py-1 bg-gray-300 rounded-full text-sm">
+                                                {PARTICIPANTS.find(p => p.name === name)?.emoji} {name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="mt-8 pt-6 border-t border-gray-200">
+                                <details className="text-sm text-gray-600">
+                                    <summary className="cursor-pointer font-semibold hover:text-gray-800">View Participants & Restrictions</summary>
+                                    <div className="mt-4 space-y-4">
+                                        <div>
+                                            <p className="font-semibold mb-2">Participants:</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {PARTICIPANTS.map((p, i) => (
+                                                    <span key={i} className="px-3 py-1 bg-blue-100 rounded-full text-xs">
+                                                        {p.emoji} {p.name}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        {Object.keys(RESTRICTIONS).length > 0 && (
+                                            <div>
+                                                <p className="font-semibold mb-2">Restrictions:</p>
+                                                <ul className="text-xs space-y-1">
+                                                    {Object.entries(RESTRICTIONS).map(([giver, receivers], i) => (
+                                                        <li key={i}>
+                                                            <strong>{giver}</strong> can't select: {receivers.join(', ')}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                </details>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<GiftExchange />, document.getElementById('root'));
+    </script>
+</body>
+</html>
