@@ -25,7 +25,7 @@ export default async function handler(req, res) {
         headers: {
           Authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}`,
         },
-        body: JSON.stringify([JSON.stringify({ alreadySelected, alreadyPicked })]),
+        body: JSON.stringify(JSON.stringify({ alreadySelected, alreadyPicked })),
       }
     );
 
