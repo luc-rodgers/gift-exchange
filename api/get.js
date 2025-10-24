@@ -23,7 +23,9 @@ export default async function handler(req, res) {
     const data = await response.json();
     
     if (data.result) {
-      return res.status(200).json(JSON.parse(data.result));
+      // Double parse because Upstash returns double-stringified data
+      const parsed = JSON.parse(JSON.parse(data.result));
+      return res.status(200).json(parsed);
     } else {
       return res.status(200).json({ alreadySelected: [], alreadyPicked: [] });
     }
