@@ -185,8 +185,8 @@
                                 <div className="flex justify-center mb-4">
                                     <Gift />
                                 </div>
-                                <h1 className="text-4xl font-bold text-green-800 mb-2">🎄 Secret Santa 🎄</h1>
-                                <p className="text-gray-600">Select your name and discover your gift recipient!</p>
+                                <h1 className="text-4xl font-bold text-green-800 mb-2"> Secret Santa </h1>
+                                <p className="text-gray-600">Select your name and generate your recipient!</p>
                                 {error && (
                                     <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
                                         {error}
@@ -232,7 +232,7 @@
                                             className="w-full py-2 text-red-600 hover:text-red-800 text-sm flex items-center justify-center gap-2"
                                         >
                                             <RefreshIcon />
-                                            Reset All Selections (Admin Only)
+                                            Reset Selections (Admin Only)
                                         </button>
                                     )}
                                 </div>
@@ -254,7 +254,7 @@
                                         <>
                                             <div className="p-8 bg-gradient-to-br from-green-100 to-red-100 rounded-xl">
                                                 <p className="text-2xl font-semibold text-gray-700 mb-4">
-                                                    {selectedPerson}, you're buying a gift for:
+                                                    {selectedPerson}, you're making a gift for:
                                                 </p>
                                                 <div className="text-8xl mb-4">{result.emoji}</div>
                                                 <p className="text-4xl font-bold text-green-800">{result.name}</p>
@@ -288,7 +288,7 @@
 
                             <div className="mt-8 pt-6 border-t border-gray-200">
                                 <details className="text-sm text-gray-600">
-                                    <summary className="cursor-pointer font-semibold hover:text-gray-800">View Participants & Restrictions</summary>
+                                    <summary className="cursor-pointer font-semibold hover:text-gray-800">View Restrictions</summary>
                                     <div className="mt-4 space-y-4">
                                         <div>
                                             <p className="font-semibold mb-2">Participants:</p>
@@ -332,5 +332,6 @@
     </script>
 </body>
 </html>
+
 
 
