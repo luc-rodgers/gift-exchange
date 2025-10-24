@@ -2,7 +2,6 @@ export default async function handler(req, res) {
   const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
   const UPSTASH_REDIS_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
